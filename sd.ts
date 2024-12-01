@@ -12,10 +12,14 @@ export default class SoktDeer {
     events: EventEmitter = new EventEmitter();
 
     constructor(wsUri = "wss://sokt.meltland.dev") {
+        this.ws = this.doWS(wsUri)
+    }
+
+    doWS(wsUri: string) {
         // deno-lint-ignore no-this-alias
         const client = this;
-        this.ws = new WebSocket(wsUri);
-        this.ws.onmessage = (rdata) => {
+        const ws = new WebSocket(wsUri);
+        ws.onmessage = (rdata) => {
             const data = JSON.parse(rdata.data.toString());
             // console.info("SD", "INCOMING", data)
             if ('command' in data) return this.wsEvents.emit(data.command, data);
@@ -27,17 +31,23 @@ export default class SoktDeer {
                 )
             if ('error' in data) return this.wsEvents.emit('error', data);
         }
-        this.wsEvents.on('greet', greetp => {
+        this.wsEvents.once('greet', greetp => {
             this.messages = greetp.messages.reverse();
             this.events.emit('ready')
         })
-        this.wsEvents.on('new_post', ({ data: post }: { data: SDtypes.Post }) => {
+        const postHandler = ({ data: post }: { data: SDtypes.Post }) => {
             this.messages.push(post);
             this.events.emit('post', new Post(post, client))
-        })
-        this.ws.onopen = () => setInterval(() => this.ping.call(this), 5000);
-        this.ws.onclose = () => {throw new Error("connection cloed")}
-        this.ws.onerror = () => {throw new Error("connection errpred")}
+        }
+        this.wsEvents.on('new_post', postHandler)
+        ws.onopen = () => setInterval(() => this.ping.call(this), 5000);
+        ws.onclose = () => {
+            console.error("connection cloed");
+            this.doWS(wsUri);
+            this.wsEvents.off('new_post', postHandler)
+        }
+        ws.onerror = () => {console.error("connection errpred");this.ws = this.doWS(wsUri)};
+        return ws
     }
 
     login(username: string, password: string): Promise<string> {
