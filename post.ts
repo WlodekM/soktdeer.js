@@ -1,5 +1,5 @@
 import * as SDtypes from "./sd-types.ts"
-import SoktDeer from "./sd.ts";
+import SoktDeer from "./sd-client.ts";
 
 export default class Post {
     id: number;

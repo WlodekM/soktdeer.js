@@ -1,5 +1,5 @@
 import Post from "./post.ts";
-import SoktDeer from "./sd.ts";
+import SoktDeer from "./sd-client.ts";
 
 const bot: SoktDeer = new SoktDeer();
 const creds: {
