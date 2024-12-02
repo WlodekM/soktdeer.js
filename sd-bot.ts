@@ -44,7 +44,7 @@ export default class SoktBot extends SoktDeer {
             args.shift() // prefix
             const command = args.shift() ?? '' // the command (duh)
             if(!this.commands.has(command)) return post.reply(`Unknown command "${command}"`);
-            this.commands.get(command)?.fn({
+            this.commands.get(command)?.fn.call(this, {
                 post,
                 reply: (postT: SDTypes.SendPost | string) => post.reply.call(post, postT),
                 args
