@@ -1,3 +1,5 @@
-# uwu the bot
+# soktdeer.js
 
- simple soktdeer bot
+a javascript library for soktdeer.
+
+also has utilities for bots.
