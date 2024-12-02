@@ -36,3 +36,9 @@ export type SendPost = {
     replies?: number[],
     attachments?: string[]
 }
+
+export type Packet = {
+    command?: string,
+    listener: string | null,
+    data?: Post | User | any
+}
