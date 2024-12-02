@@ -11,15 +11,35 @@ export default class SoktDeer {
     messages: SDtypes.Post[] = [];
     events: EventEmitter = new EventEmitter();
 
+    wsUri: string;
+    pingInterval?: number;
+
     creds: [string, string] = ['', ''];
 
     constructor(wsUri = "wss://sokt.meltland.dev") {
-        this.ws = this.doWS(wsUri)
+        this.wsUri = wsUri
+        this.ws = this.connect(this.wsUri)
     }
 
-    doWS(wsUri: string) {
-        // deno-lint-ignore no-this-alias
-        const client = this;
+    reopen() {
+        console.error("connection cloed");
+        this.wsEvents.off('new_post', this.handlePost);
+        this.connect(this.wsUri);
+        if(this.pingInterval) clearInterval(this.pingInterval); // clear ping interval
+        if(this.creds[0]) {
+            this.ws.addEventListener('open', () => {
+                this.login(...this.creds)
+            })
+        }
+    }
+
+    handlePost ({ data: post }: { data: SDtypes.Post }) {
+        console.log(this.loggedIn)
+        this.messages.push(post);
+        this.events.emit('post', new Post(post, this))
+    }
+
+    connect(wsUri: string) {
         const ws = new WebSocket(wsUri);
         ws.onmessage = (rdata) => {
             const data = JSON.parse(rdata.data.toString());
@@ -37,23 +57,10 @@ export default class SoktDeer {
             this.messages = greetp.messages.reverse();
             this.events.emit('ready')
         })
-        const postHandler = ({ data: post }: { data: SDtypes.Post }) => {
-            this.messages.push(post);
-            this.events.emit('post', new Post(post, client))
-        }
-        this.wsEvents.on('new_post', postHandler)
-        ws.onopen = () => setInterval(() => this.ping.call(this), 5000);
-        ws.onclose = () => {
-            console.error("connection cloed");
-            this.wsEvents.off('new_post', postHandler);
-            this.doWS(wsUri);
-            if(this.creds[0]) {
-                this.ws.addEventListener('open', () => {
-                    this.login(...this.creds)
-                })
-            }
-        }
-        ws.onerror = () => {console.error("connection errpred");this.ws = this.doWS(wsUri)};
+        this.wsEvents.on('new_post', this.handlePost);
+        ws.onopen  = () => this.pingInterval = setInterval(() => this.ping.call(this), 5000);
+        ws.onclose = () => this.reopen
+        ws.onerror = () => this.reopen;
         return ws
     }
 
@@ -118,6 +125,7 @@ export default class SoktDeer {
     }
 
     ping(): void {
+        if(this.ws.readyState != this.ws.OPEN) return console.warn('Tried to ping when not OPEN');
         this.ws.send(JSON.stringify({ command: "ping" }))
     }
 }
