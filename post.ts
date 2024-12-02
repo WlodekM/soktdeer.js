@@ -27,7 +27,7 @@ export default class Post {
     reply(post: SDtypes.SendPost | string) {
         if(typeof post == 'string') post = { content: post, attachments: [], replies: [] }
         if(!post.replies) post.replies = [];
-        if(!this.bot) throw new Error('Post.reply requires bot to be specified')
+        if(!this.bot?.loggedIn) throw new Error('Post.reply requires bot to be specified')
         post.replies.unshift(this.id);
         if(post.replies.length > 3) post.replies = post.replies.slice(0, 3);
         this.bot?.post(post)

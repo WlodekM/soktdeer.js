@@ -31,7 +31,7 @@ type ImportedCommand = {
     command: string
 } & Command
 
-class SoktBot extends SoktDeer {
+export default class SoktBot extends SoktDeer {
     commands: Map<string, Command> = new Map<string, Command>();
     constructor (config: BotConfig) {
         super(config.server)
@@ -44,10 +44,17 @@ class SoktBot extends SoktDeer {
             args.shift() // prefix
             const command = args.shift() ?? '' // the command (duh)
             if(!this.commands.has(command)) return post.reply(`Unknown command "${command}"`);
-            this.commands.get(command)?.fn({post, reply: post.reply, args})
+            this.commands.get(command)?.fn({
+                post,
+                reply: (postT: SDTypes.SendPost | string) => post.reply.call(post, postT),
+                args
+            })
         })
     }
     command(name: string, command: Command) {
         this.commands.set(name, command)
+    }
+    importCommand(command: ImportedCommand) {
+        this.commands.set(command.command, command)
     }
 }

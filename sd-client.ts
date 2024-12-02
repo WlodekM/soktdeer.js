@@ -11,6 +11,8 @@ export default class SoktDeer {
     messages: SDtypes.Post[] = [];
     events: EventEmitter = new EventEmitter();
 
+    creds: [string, string] = ['', ''];
+
     constructor(wsUri = "wss://sokt.meltland.dev") {
         this.ws = this.doWS(wsUri)
     }
@@ -43,21 +45,24 @@ export default class SoktDeer {
         ws.onopen = () => setInterval(() => this.ping.call(this), 5000);
         ws.onclose = () => {
             console.error("connection cloed");
+            this.wsEvents.off('new_post', postHandler);
             this.doWS(wsUri);
-            this.wsEvents.off('new_post', postHandler)
+            if(this.creds[0]) this.login(...this.creds)
         }
         ws.onerror = () => {console.error("connection errpred");this.ws = this.doWS(wsUri)};
         return ws
     }
 
     login(username: string, password: string): Promise<string> {
-        this.username = username
+        this.username = username;
+        this.creds = [username, password];
         return new Promise((resolve, reject) => {
             this.ws.send(JSON.stringify({
                 command: "login_pswd",
                 username,
                 password
             }))
+            this.loggedIn = true;
             this.wsEvents.once('token', ({ token }) => {
                 this.token = token;
                 resolve(token)
@@ -78,6 +83,7 @@ export default class SoktDeer {
                 token,
                 username
             }))
+            this.loggedIn = true;
             this.wsEvents.once('error', error => {
                 if (error.error) reject(error.code)
                 else resolve()
