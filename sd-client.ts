@@ -47,7 +47,11 @@ export default class SoktDeer {
             console.error("connection cloed");
             this.wsEvents.off('new_post', postHandler);
             this.doWS(wsUri);
-            if(this.creds[0]) this.login(...this.creds)
+            if(this.creds[0]) {
+                this.ws.addEventListener('open', () => {
+                    this.login(...this.creds)
+                })
+            }
         }
         ws.onerror = () => {console.error("connection errpred");this.ws = this.doWS(wsUri)};
         return ws
