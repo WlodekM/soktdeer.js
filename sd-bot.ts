@@ -50,6 +50,19 @@ export default class SoktBot extends SoktDeer {
                 args
             })
         })
+        if(config.genHelp != false) {
+            this.command('help', {
+                aliases: ['?'],
+                args: [],
+                fn: ({ reply }) => {
+                    reply([...this.commands.entries()]
+                        .map<string>(
+                            ([n, c]) => `\`@${this.username} ${n}\` ${c.args.map(a => `<${a}>`).join(' ')}`
+                        ).join('\n')
+                    )
+                }
+            })
+        }
     }
     command(name: string, command: Command) {
         this.commands.set(name, command)
