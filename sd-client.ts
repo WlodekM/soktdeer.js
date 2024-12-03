@@ -14,8 +14,6 @@ export default class SoktDeer {
     wsUri: string;
     pingInterval?: number;
 
-    creds: [string, string] = ['', ''];
-
     constructor(wsUri = "wss://sokt.meltland.dev") {
         this.wsUri = wsUri
         this.ws = this.connect(this.wsUri)
@@ -26,9 +24,9 @@ export default class SoktDeer {
         this.wsEvents.off('new_post', this.handlePost);
         this.connect(this.wsUri);
         if(this.pingInterval) clearInterval(this.pingInterval); // clear ping interval
-        if(this.creds[0]) {
+        if(this.token) {
             this.ws.addEventListener('open', () => {
-                this.login(...this.creds)
+                this.loginToken(this.token, this.username)
             })
         }
     }
@@ -66,7 +64,6 @@ export default class SoktDeer {
 
     login(username: string, password: string): Promise<string> {
         this.username = username;
-        this.creds = [username, password];
         return new Promise((resolve, reject) => {
             this.ws.send(JSON.stringify({
                 command: "login_pswd",

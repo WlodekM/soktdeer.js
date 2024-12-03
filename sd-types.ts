@@ -40,5 +40,6 @@ export type SendPost = {
 export type Packet = {
     command?: string,
     listener: string | null,
-    data?: Post | User | any
+    // deno-lint-ignore no-explicit-any
+    data?: Post | User | any // use any for packets that i have not added yet
 }
