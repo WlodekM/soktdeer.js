@@ -16,14 +16,14 @@ export default class SoktDeer {
 
     constructor(wsUri = "wss://sokt.meltland.dev") {
         this.wsUri = wsUri
-        this.ws = this.connect(this.wsUri)
+        this.ws = this.connect(this.wsUri, this)
     }
 
     reopen() {
         console.error("connection cloed");
-        this.wsEvents.off('new_post', this.handlePost);
-        this.connect(this.wsUri);
         if(this.pingInterval) clearInterval(this.pingInterval); // clear ping interval
+        this.wsEvents.off('new_post', this.handlePost);
+        this.connect(this.wsUri, this);
         if(this.token) {
             this.ws.addEventListener('open', () => {
                 this.loginToken(this.token, this.username)
@@ -31,17 +31,15 @@ export default class SoktDeer {
         }
     }
 
-    handlePost ({ data: post }: { data: SDtypes.Post }) {
-        console.log(this.loggedIn)
-        this.messages.push(post);
-        this.events.emit('post', new Post(post, this))
+    handlePost ({ data: post }: { data: SDtypes.Post }, client: SoktDeer) {
+        client.messages.push(post);
+        client.events.emit('post', new Post(post, client))
     }
 
-    connect(wsUri: string) {
+    connect(wsUri: string, client: SoktDeer) {
         const ws = new WebSocket(wsUri);
         ws.onmessage = (rdata) => {
             const data = JSON.parse(rdata.data.toString());
-            // console.info("SD", "INCOMING", data)
             if ('command' in data) return this.wsEvents.emit(data.command, data);
             if ('error' in data
                 && Object.keys(data).filter(k => !['error', 'code'].includes(k)).length > 0)
@@ -52,10 +50,11 @@ export default class SoktDeer {
             if ('error' in data) return this.wsEvents.emit('error', data);
         }
         this.wsEvents.once('greet', greetp => {
-            this.messages = greetp.messages.reverse();
+            if(greetp.messages)
+                this.messages = greetp.messages.reverse();
             this.events.emit('ready')
         })
-        this.wsEvents.on('new_post', this.handlePost);
+        this.wsEvents.on('new_post', (data) => this.handlePost(data, client));
         ws.onopen  = () => this.pingInterval = setInterval(() => this.ping.call(this), 5000);
         ws.onclose = () => this.reopen
         ws.onerror = () => this.reopen;
