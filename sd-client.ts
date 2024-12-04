@@ -36,18 +36,36 @@ export default class SoktDeer {
         client.events.emit('post', new Post(post, client))
     }
 
+    send (command: string, listener?: string, data?: {}) {
+        this.ws.send(JSON.stringify({
+            command,
+            ...data,
+            listener
+        }))
+        if (listener) return new Promise<any>((resolve, reject) => {
+            this.wsEvents.once(`listener-${listener}`, (data) => {
+                if (data.error) reject(data.code ?? "Unknown error");
+                resolve(data)
+            })
+        })
+    }
+
     connect(wsUri: string, client: SoktDeer) {
         const ws = new WebSocket(wsUri);
         ws.onmessage = (rdata) => {
             const data = JSON.parse(rdata.data.toString());
-            if ('command' in data) return this.wsEvents.emit(data.command, data);
+            if (data.listener && data.listener != null)
+                return this.wsEvents.emit('listener-'+data.listener, data);
+            if ('command' in data)
+                return this.wsEvents.emit(data.command, data);
             if ('error' in data
                 && Object.keys(data).filter(k => !['error', 'code'].includes(k)).length > 0)
                 return this.wsEvents.emit(
                     Object.keys(data).filter(k => !['error', 'code'].includes(k))[0],
                     data
                 )
-            if ('error' in data) return this.wsEvents.emit('error', data);
+            if ('error' in data)
+                return this.wsEvents.emit('error', data);
         }
         this.wsEvents.once('greet', greetp => {
             if(greetp.messages)
