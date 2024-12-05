@@ -74,8 +74,8 @@ export default class SoktDeer {
         })
         this.wsEvents.on('new_post', (data) => this.handlePost(data, client));
         ws.onopen  = () => this.pingInterval = setInterval(() => this.ping.call(this), 5000);
-        ws.onclose = () => this.reopen
-        ws.onerror = () => this.reopen;
+        ws.onclose = () => this.reopen()
+        ws.onerror = () => this.reopen()
         return ws
     }
 
