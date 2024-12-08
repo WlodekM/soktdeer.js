@@ -19,17 +19,19 @@ export default class SoktDeer {
         this.ws = this.connect(this.wsUri, this)
     }
 
-    reopen() {
-        console.error("connection cloed");
-        if(this.pingInterval) clearInterval(this.pingInterval); // clear ping interval
-        this.wsEvents.off('new_post', this.handlePost);
-        this.connect(this.wsUri, this);
-        if(this.token) {
-            this.ws.addEventListener('open', () => {
-                this.loginToken(this.token, this.username)
-            })
-        }
-    }
+    //TODO - reimplemet
+    // reopen() {
+    //     console.error("connection cloed");
+    //     this.ws.close();
+    //     if(this.pingInterval) clearInterval(this.pingInterval); // clear ping interval
+    //     this.wsEvents.off('new_post', this.handlePost);
+    //     this.connect(this.wsUri, this);
+    //     if(this.token) {
+    //         this.ws.addEventListener('open', () => {
+    //             this.loginToken(this.token, this.username)
+    //         })
+    //     }
+    // }
 
     handlePost ({ data: post }: { data: SDtypes.Post }, client: SoktDeer) {
         client.messages.push(post);
@@ -74,8 +76,8 @@ export default class SoktDeer {
         })
         this.wsEvents.on('new_post', (data) => this.handlePost(data, client));
         ws.onopen  = () => this.pingInterval = setInterval(() => this.ping.call(this), 5000);
-        ws.onclose = () => this.reopen()
-        ws.onerror = () => this.reopen()
+        ws.onclose = () => setTimeout(() => this.events.emit('disconnect'), 2000)
+        ws.onerror = () => setTimeout(() => this.events.emit('disconnect'), 2000)
         return ws
     }
 

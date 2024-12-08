@@ -31,14 +31,18 @@ type ImportedCommand = {
     command: string
 } & Command
 
-export default class SoktBot extends SoktDeer {
+export default class SoktBot {
     commands: Map<string, Command> = new Map<string, Command>();
+    token: string = '';
+    username: string = '';
+    client: SoktDeer;
     constructor (config: BotConfig) {
-        super(config.server)
-        this.events.on('ready', ()=>{
-            this.login(config.username, config.password);
+        this.username = config.username
+        this.client = new SoktDeer(config.server);
+        this.client.events.on('ready', async ()=>{
+            this.token = await this.client.login(config.username, config.password);
         })
-        this.events.on('post', (post: Post) => {
+        this.client.events.on('post', (post: Post) => {
             if (!post.content.startsWith(`@${this.username}`)) return;
             const args = post.content.split(' ');
             args.shift() // prefix
