@@ -35,12 +35,18 @@ export default class SoktBot {
     commands: Map<string, Command> = new Map<string, Command>();
     token: string = '';
     username: string = '';
-    client: SoktDeer;
+    client!: SoktDeer; // no typescript this is asigned to
     constructor (config: BotConfig) {
-        this.username = config.username
+        this.username = config.username;
+        this.initClient(config);
+    }
+    initClient(config: BotConfig) {
         this.client = new SoktDeer(config.server);
         this.client.events.on('ready', async ()=>{
             this.token = await this.client.login(config.username, config.password);
+        })
+        this.client.events.on('disconnect', () => {
+            this.initClient(config);
         })
         this.client.events.on('post', (post: Post) => {
             if (!post.content.startsWith(`@${this.username}`)) return;
