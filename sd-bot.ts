@@ -36,6 +36,7 @@ export default class SoktBot {
     token: string = '';
     username: string = '';
     client!: SoktDeer; // no typescript this is asigned to
+    events = this.client.events;
     constructor (config: BotConfig) {
         this.username = config.username;
         this.initClient(config);
@@ -73,6 +74,7 @@ export default class SoktBot {
                 }
             })
         }
+        this.events = this.client.events;
     }
     command(name: string, command: Command) {
         this.commands.set(name, command)
