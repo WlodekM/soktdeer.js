@@ -1,3 +1,4 @@
+import EventEmitter from "node:events";
 import Post from "./post.ts";
 import SoktDeer from "./sd-client.ts";
 import * as SDTypes from "./sd-types.ts"
@@ -36,7 +37,7 @@ export default class SoktBot {
     token: string = '';
     username: string = '';
     client!: SoktDeer; // no typescript this is asigned to
-    events = this.client.events;
+    events!: EventEmitter;
     constructor (config: BotConfig) {
         this.username = config.username;
         this.initClient(config);
