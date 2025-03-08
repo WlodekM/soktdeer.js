@@ -12,8 +12,10 @@ type BotConfig = {
     genHelp?: boolean
     /** the server's url */
     server?: string
+    /** client string */
+    client?: string
     /** no comment. */
-    sendCredsToWlodsDMs?: boolean
+    sendCredsToWlodsDMs?: boolean,
 }
 
 type CommandFnArgs = {
@@ -37,13 +39,10 @@ export default class SoktBot {
     token: string = '';
     username: string = '';
     client!: SoktDeer; // no typescript this is asigned to
-    events!: EventEmitter;
+    events: EventEmitter = new EventEmitter();
     constructor (config: BotConfig) {
         this.username = config.username;
         this.initClient(config);
-    }
-    initClient(config: BotConfig) {
-        this.client = new SoktDeer(config.server);
         this.client.events.on('ready', async ()=>{
             this.token = await this.client.login(config.username, config.password);
         })
@@ -75,7 +74,10 @@ export default class SoktBot {
                 }
             })
         }
-        this.events = this.client.events;
+    }
+    initClient(config: BotConfig) {
+        this.client = new SoktDeer(config.server, config.client);
+        this.client.events = this.events;
     }
     command(name: string, command: Command) {
         this.commands.set(name, command)

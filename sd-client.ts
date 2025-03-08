@@ -14,9 +14,12 @@ export default class SoktDeer {
     wsUri: string;
     pingInterval?: number;
 
-    constructor(wsUri = "wss://sokt.meltland.dev") {
+    client: string;
+
+    constructor(wsUri = "wss://sokt.meltland.dev", client = "SD client") {
         this.wsUri = wsUri
         this.ws = this.connect(this.wsUri, this)
+        this.client = client
     }
 
     //TODO - reimplemet
@@ -76,8 +79,14 @@ export default class SoktDeer {
         })
         this.wsEvents.on('new_post', (data) => this.handlePost(data, client));
         ws.onopen  = () => this.pingInterval = setInterval(() => this.ping.call(this), 5000);
-        ws.onclose = () => setTimeout(() => this.events.emit('disconnect'), 2000)
-        ws.onerror = () => setTimeout(() => this.events.emit('disconnect'), 2000)
+        ws.onclose = () => {
+            if(this.pingInterval) clearInterval(this.pingInterval)
+            this.events.emit('disconnect')
+        }
+        ws.onerror = () => {
+            if(this.pingInterval) clearInterval(this.pingInterval)
+            this.events.emit('disconnect')
+        }
         return ws
     }
 
@@ -87,7 +96,8 @@ export default class SoktDeer {
             this.ws.send(JSON.stringify({
                 command: "login_pswd",
                 username,
-                password
+                password,
+                client: this.client
             }))
             this.loggedIn = true;
             this.wsEvents.once('token', ({ token }) => {
@@ -141,7 +151,11 @@ export default class SoktDeer {
     }
 
     ping(): void {
-        if(this.ws.readyState != this.ws.OPEN) return console.warn('Tried to ping when not OPEN');
+        if(this.ws.readyState != this.ws.OPEN) {
+            this.ws.close() // incase it's somehow not fully closed
+            console.warn('Tried to ping when not OPEN')
+            return;
+        }
         this.ws.send(JSON.stringify({ command: "ping" }))
     }
 }
