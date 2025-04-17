@@ -44,7 +44,9 @@ export default class SoktBot {
         this.username = config.username;
         this.initClient(config);
         this.client.events.on('ready', async ()=>{
-            this.token = await this.client.login(config.username, config.password);
+            if (!this.client.loggedIn &&
+                this.client.ws.readyState == WebSocket.OPEN)
+                this.token = await this.client.login(config.username, config.password);
         })
         this.client.events.on('disconnect', () => {
             this.initClient(config);
