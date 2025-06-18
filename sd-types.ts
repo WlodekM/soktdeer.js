@@ -14,7 +14,7 @@ export type ExtendedUser = User & {
 }
 
 export type Reply = {
-    id: number,
+    _id: string,
     created: number,
     content: string,
     replies: Reply[]
@@ -23,7 +23,7 @@ export type Reply = {
 }
 
 export type Post = {
-    id: number,
+    _id: string,
     created: number,
     content: string,
     replies: Reply[],
@@ -33,7 +33,7 @@ export type Post = {
 
 export type SendPost = {
     content: string,
-    replies?: number[],
+    replies?: string[],
     attachments?: string[]
 }
 

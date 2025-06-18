@@ -2,7 +2,7 @@ import * as SDtypes from "./sd-types.ts"
 import SoktDeer from "./sd-client.ts";
 
 export default class Post {
-    id: number;
+    _id: string;
     created: number;
     content: string;
     replies: SDtypes.Reply[];
@@ -10,7 +10,7 @@ export default class Post {
     author: SDtypes.User;
     bot?: SoktDeer;
     constructor (post: SDtypes.Post, bot?: SoktDeer) {
-        this.id = post.id;
+        this._id = post._id;
         this.created = post.created;
         this.content = post.content;
         this.replies = post.replies;
@@ -28,7 +28,7 @@ export default class Post {
         if(typeof post == 'string') post = { content: post, attachments: [], replies: [] }
         if(!post.replies) post.replies = [];
         if(!this.bot?.loggedIn) throw new Error('Post.reply requires bot to be specified')
-        post.replies.unshift(this.id);
+        post.replies.unshift(this._id);
         if(post.replies.length > 3) post.replies = post.replies.slice(0, 3);
         this.bot?.post(post)
     }
